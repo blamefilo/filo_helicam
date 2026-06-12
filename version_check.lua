@@ -93,7 +93,11 @@ end
 
 AddEventHandler("onResourceStart", function(resource)
     if resource ~= cache.resource then return end
-    Wait(5000)
+    Wait(math.random(5000, 10000))
+
+    if GlobalState.filo_version then return end
+    GlobalState.filo_version = true
+
     checkVersion()
 end)
 
