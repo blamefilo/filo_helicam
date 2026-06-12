@@ -2,6 +2,7 @@ fx_version "cerulean"
 game "gta5"
 lua54 "yes"
 
+name "filo_helicam"
 original_author "ZeroFour04"
 author "filo studios."
 description "A FiveM helicoper camera script"
