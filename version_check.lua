@@ -1,3 +1,13 @@
+local hasEscrowIgnore = false
+
+for i = 0, GetNumResourceMetadata(cache.resource, "dependency") do
+    local dep = GetResourceMetadata(cache.resource, "dependency", i)
+    if dep == "/assetpacks" then
+        hasEscrowIgnore = true
+    end
+end
+
+local resourceName = GetResourceMetadata(cache.resource, "name", 0)
 local color = "^4"
 local white = "^7"
 local logo = [[
@@ -26,15 +36,27 @@ local function compareVersions(v1, v2)
     return 0
 end
 
+
 local function checkVersion()
     print(color .. logo .. white)
-    local url = ("https://raw.githubusercontent.com/%s/main/%s"):format(githubRepo, cache.resource)
+    local url = ("https://raw.githubusercontent.com/%s/refs/heads/main/%s"):format(githubRepo, cache.resource)
     PerformHttpRequest(url, function(err, responseText, headers)
         if responseText then
             local data = {}
+            local lastKey = nil
             for line in responseText:gmatch("[^\r\n]+") do
-                local key, value = line:match("^(.-):%s*(.*)$")
-                if key and value then data[key] = value end
+                local indented = line:match("^%s+(.+)$")
+                if indented and lastKey then
+                    data[lastKey] = data[lastKey] .. "\n    " .. indented
+                else
+                    local key, value = line:match("^([%w_]+):%s*(.*)$")
+                    if key then
+                        data[key] = value
+                        lastKey = key
+                    else
+                        lastKey = nil
+                    end
+                end
             end
 
             local newestVersion = data["version"]
@@ -55,7 +77,13 @@ local function checkVersion()
                             print(("^7 - %s^7"):format(file:gsub("^%s*(.-)%s*$", "%1")))
                         end
                     end
-                    print("^3Download: ^7https://github.com/blamefilo/filo_helicam^7")
+
+                    if hasEscrowIgnore then
+                        print("^3Download: ^7https://portal.cfx.re/assets/^7")
+                    else
+                        print(("^3Download: ^7https://github.com/blamefilo/%s^7"):format(resourceName))
+                    end
+
                     print("^1-------------------------------------------------------\n^7")
                 elseif comparison == 1 then
                     print(("^3[Developer] ^7%s is running a higher version than the repo (v%s)^7"):format(cache.resource, currentVersion))
@@ -76,10 +104,10 @@ AddEventHandler("onResourceStart", function(resource)
 end)
 
 CreateThread(function()
-    if cache.resource ~= "filo_helicam" then
+    if cache.resource ~= resourceName then
         while true do
             Wait(5000)
-            print("Cannot check version for filo_helicam, make sure you are using the correct resource name")
+            print("Cannot check version for " .. cache.resource .. ", make sure you are using the correct resource name " .. resourceName)
         end
     end
 end)
