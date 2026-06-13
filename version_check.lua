@@ -28,12 +28,15 @@ end
 
 
 local function checkVersion()
-    local consolePrintUrl = ("https://raw.githubusercontent.com/%s/refs/heads/main/%s"):format(githubRepo, 'consolePrint')
-    PerformHttpRequest(consolePrintUrl, function(err, responseText, headers)
-        if responseText then
-            print(responseText)
-        end
-    end, 'GET')
+    if not GlobalState.filo_version then
+        GlobalState.filo_version = true
+        local consolePrintUrl = ("https://raw.githubusercontent.com/%s/refs/heads/main/%s"):format(githubRepo, 'consolePrint')
+        PerformHttpRequest(consolePrintUrl, function(err, responseText, headers)
+            if responseText then
+                print(responseText)
+            end
+        end, 'GET')
+    end
 
     local url = ("https://raw.githubusercontent.com/%s/refs/heads/main/%s"):format(githubRepo, cache.resource)
     PerformHttpRequest(url, function(err, responseText, headers)
@@ -94,9 +97,6 @@ end
 AddEventHandler("onResourceStart", function(resource)
     if resource ~= cache.resource then return end
     Wait(math.random(5000, 10000))
-
-    if GlobalState.filo_version then return end
-    GlobalState.filo_version = true
 
     checkVersion()
 end)
